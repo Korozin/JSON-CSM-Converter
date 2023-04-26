@@ -29,6 +29,8 @@ This script uses the following classes:
 
 ## Credits
 
-This script was created by [KorOwOzin](https://github.com/Korozin). Feel free to use it and modify it as needed. If you find any bugs or issues, please let me know.
+This script was created by [KorOwOzin](https://github.com/Korozin). Feel free to use it and modify it as needed. If you find any bugs or issues, please let me know.  
+
+GUI was inspired by [Eden](https://www.youtube.com/@eden3279)
 
 > Licensed under [MIT License](https://github.com/Korozin/JSON-CSM-Converter/blob/main/LICENSE)
