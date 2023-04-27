@@ -1,5 +1,5 @@
 import json
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtWidgets
 from Classes import MainWindow, InfoWindow, ErrorWindow
 
 
@@ -7,11 +7,24 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
     def __init__(self):
         super(JSONConvert_Main, self).__init__()
 
+        # Set up base GUI parameters
         self.setupUi(self)
         self.Set_Functions()
         self.CSM_Text_Edit.setReadOnly(True)
         self.KorOwOzin_Label.setOpenExternalLinks(True)
 
+        self.Head_Button.setToolTip("Convert all JSON data to use BOX:HEAD tag")
+        self.Body_Button.setToolTip("Convert all JSON data to use BOX:BODY tag")
+        self.Arm0_Button.setToolTip("Convert all JSON data to use BOX:ARM0 tag")
+        self.Arm1_Button.setToolTip("Convert all JSON data to use BOX:ARM1 tag")
+        self.Leg0_Button.setToolTip("Convert all JSON data to use BOX:LEG0 tag")
+        self.Leg1_Button.setToolTip("Convert all JSON data to use BOX:LEG1 tag")
+        self.Dynamic_Button.setToolTip("Convert JSON data dynamically based on \
+                                                existing type (EG: Head data will be converted\
+                                                to BOX:HEAD) if bb_main data exists, you can\
+                                                choose the tag that gets assigned")
+
+        # Initialize Error / Info windows
         self.ErrorWindow = ErrorWindow.ErrorWindow()
         self.InfoWindow = InfoWindow.InfoWindow()
 
@@ -19,6 +32,7 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
     def Set_Functions(self):
         self.Clear_Button.clicked.connect(self.Clear_Form)
         self.Copy_Button.clicked.connect(self.Copy_Form_Contents)
+        self.Dynamic_Button.clicked.connect(self.Dynamic_Convert_JSON)
 
         Button_Text_Pairs = [(self.Head_Button, "HEAD"), (self.Body_Button, "BODY"),
                             (self.Arm0_Button, "ARM0"), (self.Arm1_Button, "ARM1"),
@@ -62,11 +76,52 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
                     Lines.append(' '.join(map(str, CSM_Data)))
 
             self.CSM_Text_Edit.insertPlainText('\n'.join(Lines))
-            if Lines:
-                self.CSM_Text_Edit.moveCursor(QtGui.QTextCursor.EndOfLine)
         except json.decoder.JSONDecodeError as e:
             self.ErrorWindow.CreateWindow("JSON Error!",
-                                         f"{e}<br/><br/>Invalid JSON Data",
+                                         f"{e}<br/><br/>Invalid or empty JSON Data",
+                                         500, 200)
+            self.ErrorWindow.show()
+
+
+    def Dynamic_Convert_JSON(self):
+        try:
+            data = json.loads(self.JSON_Text_Edit.toPlainText())
+            self.CSM_Text_Edit.clear()
+
+            box_names = {
+                'bb_main': 'NULL',
+                'Head': 'HEAD',
+                'Body': 'BODY',
+                'RightArm': 'ARM0',
+                'LeftArm': 'ARM1',
+                'RightLeg': 'LEG0',
+                'LeftLeg': 'LEG1'
+            }
+
+            # Get a list of all the box names except 'bb_main'
+            valid_box_names = [box_names[name] for name in box_names if name != 'bb_main']
+
+            boxes = []
+            for bone in data['minecraft:geometry'][0]['bones']:
+                if bone['name'] == 'bb_main':
+                    # Show a dialog box with a list of valid options for the user to choose from
+                    box_name, ok = QtWidgets.QInputDialog.getItem(self, "Choose a tag", "Choose a tag for bb_main from the following options:", valid_box_names)
+                    if not ok:
+                        return
+                else:
+                    box_name = box_names[bone['name']]
+
+                for cube in bone['cubes']:
+                    origin = cube['origin']
+                    size = cube['size']
+                    uv = cube['uv']
+                    boxes.append(f"BOX:{box_name} {origin[0]} {origin[1]} {origin[2]} {size[0]} {size[1]} {size[2]} {uv[0]} {uv[1]}")
+
+            box_string = "\n".join(boxes)
+            self.CSM_Text_Edit.insertPlainText(box_string)
+        except json.decoder.JSONDecodeError as e:
+            self.ErrorWindow.CreateWindow("JSON Error!",
+                                         f"{e}<br/><br/>Invalid or empty JSON Data",
                                          500, 200)
             self.ErrorWindow.show()
 
