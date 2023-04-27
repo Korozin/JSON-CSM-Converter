@@ -1,4 +1,9 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
+if __name__ == "__main__":
+    import sys
+    print("This is a module that is imported by 'JSONConvert.py'. Don't run it directly.")
+    sys.exit()
+else:
+    from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class JSONConvert_GUI(object):

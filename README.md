@@ -6,17 +6,27 @@ This is a Python program I made that converts Blockbench JSON data to CSM / BOX 
 
 -    Python 3.x
 -    PyQt5
+-    json
+-    base64
+
+All modules can be installed by running  
+
+```python
+pip install -r requirements.txt
+```
+
+([requirements.txt](https://github.com/Korozin/JSON-CSM-Converter/tree/main/src/requirements.txt) is located in the [src](https://github.com/Korozin/JSON-CSM-Converter/tree/main/src) folder)
 
 ## How to Use
 
 1.    Run the script using the command `python JSONConvert.py`.
 2.    Open your JSON file in a text editor, copy everything (`CTRL + A`), and paste it into the `JSON` Text Box.
-3.    Choose the mode you want to convert with by using the provided buttons (EG: `HEAD`, `BODY`, `ARM0` / `ARM1`, etc).
+3.    Choose the mode you want to convert with by using the provided buttons (EG: `HEAD`, `BODY`, `ARM0` / `ARM1`, `Dynamic`, etc).
 5.    Once you are satisfied with the generated CSM data, click the "Copy" button to copy the data to your clipboard.
 
 ## GUI Preview
 
-<img src="https://github.com/Korozin/JSON-CSM-Converter/blob/main/Assets/GUI.png" width="450px" height="600px">
+<img src="https://github.com/Korozin/JSON-CSM-Converter/blob/main/Assets/MainGUI.png" width="450px" height="600px">
 
 ## Classes
 

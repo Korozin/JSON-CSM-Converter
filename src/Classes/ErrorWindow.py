@@ -1,6 +1,7 @@
 if __name__ == "__main__":
-    print("This is a module that is imported by 'QtGecko.py'. Don't run it directly.")
-    exit()
+    import sys
+    print("This is a module that is imported by 'JSONConvert.py'. Don't run it directly.")
+    sys.exit()
 else:
     import base64, PyQt5
 
