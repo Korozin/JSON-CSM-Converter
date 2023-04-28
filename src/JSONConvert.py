@@ -48,21 +48,23 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
             self.CSM_Text_Edit.clear()
 
             Bone_Dict = {
-                "bb_main": "BODY",
-                "Head": "HEAD",
-                "Body": "BODY",
-                "RightArm": "ARM",
-                "LeftArm": "ARM",
-                "RightLeg": "LEG",
-                "LeftLeg": "LEG"
+                'bb_main': 'NULL',
+                'Head': 'HEAD',
+                'Body': 'BODY',
+                'RightArm': 'ARM0',
+                'LeftArm': 'ARM1',
+                'RightLeg': 'LEG0',
+                'LeftLeg': 'LEG1'
             }
 
             Lines = []
             for Bone in Data["minecraft:geometry"][0]["bones"]:
                 if "cubes" not in Bone:
                     continue
-                if Bone["name"] not in Bone_Dict:
+                bone_name = Bone["name"]
+                if not any([bone_name.startswith("bb_main"), bone_name in Bone_Dict]):
                     continue
+                bone_type = Bone_Dict.get(bone_name, Bone_Dict["bb_main"])
                 for Cube in Bone["cubes"]:
                     CSM_Data = f"BOX:{mode_text}", \
                                Cube["origin"][0], \
@@ -99,17 +101,30 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
             }
 
             # Get a list of all the box names except 'bb_main'
-            valid_box_names = [box_names[name] for name in box_names if name != 'bb_main']
+            valid_box_names = [box_names[name] for name in box_names if 'bb_main' not in name]
+
+            # Show a dialog box with a list of valid options for the user to choose from
+            box_name, ok = QtWidgets.QInputDialog.getItem(self, "Choose a tag", "Choose a tag for all bb_main instances from the following options:", valid_box_names)
+            if not ok:
+                return
 
             boxes = []
             for bone in data['minecraft:geometry'][0]['bones']:
-                if bone['name'] == 'bb_main':
-                    # Show a dialog box with a list of valid options for the user to choose from
-                    box_name, ok = QtWidgets.QInputDialog.getItem(self, "Choose a tag", "Choose a tag for bb_main from the following options:", valid_box_names)
-                    if not ok:
-                        return
+                if 'bb_main' in bone['name']:
+                    # Use the chosen tag for all instances of bb_main
+                    box_name_bb_main = box_name
                 else:
-                    box_name = box_names[bone['name']]
+                    box_name_bb_main = box_names.get('bb_main', None)
+
+                box_name = box_names.get(bone['name'], None)
+                if not box_name:
+                    # If the bone name is not in the box_names dictionary, check if it contains 'bb_main'
+                    if 'bb_main' in bone['name']:
+                        # Use the chosen tag for all instances of bb_main
+                        box_name = box_name_bb_main
+                    else:
+                        # If the bone name is not recognized, skip it
+                        continue
 
                 for cube in bone['cubes']:
                     origin = cube['origin']
