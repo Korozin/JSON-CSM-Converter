@@ -104,25 +104,19 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
             valid_box_names = [box_names[name] for name in box_names if 'bb_main' not in name]
 
             # Show a dialog box with a list of valid options for the user to choose from
+            chosen_bb_main_tag = None  
             box_name, ok = QtWidgets.QInputDialog.getItem(self, "Choose a tag", "Choose a tag for all bb_main instances from the following options:", valid_box_names)
             if not ok:
                 return
+            chosen_bb_main_tag = box_name
 
             boxes = []
             for bone in data['minecraft:geometry'][0]['bones']:
                 if 'bb_main' in bone['name']:
-                    # Use the chosen tag for all instances of bb_main
-                    box_name_bb_main = box_name
+                    box_name_bone = chosen_bb_main_tag
                 else:
-                    box_name_bb_main = box_names.get('bb_main', None)
-
-                box_name = box_names.get(bone['name'], None)
-                if not box_name:
-                    # If the bone name is not in the box_names dictionary, check if it contains 'bb_main'
-                    if 'bb_main' in bone['name']:
-                        # Use the chosen tag for all instances of bb_main
-                        box_name = box_name_bb_main
-                    else:
+                    box_name_bone = box_names.get(bone['name'], None)
+                    if not box_name_bone:
                         # If the bone name is not recognized, skip it
                         continue
 
@@ -130,7 +124,7 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
                     origin = cube['origin']
                     size = cube['size']
                     uv = cube['uv']
-                    boxes.append(f"BOX:{box_name} {origin[0]} {origin[1]} {origin[2]} {size[0]} {size[1]} {size[2]} {uv[0]} {uv[1]}")
+                    boxes.append(f"BOX:{box_name_bone} {origin[0]} {origin[1]} {origin[2]} {size[0]} {size[1]} {size[2]} {uv[0]} {uv[1]}")
 
             box_string = "\n".join(boxes)
             self.CSM_Text_Edit.insertPlainText(box_string)
@@ -139,7 +133,6 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
                                          f"{e}<br/><br/>Invalid or empty JSON Data",
                                          500, 200)
             self.ErrorWindow.show()
-
 
     def Clear_Form(self):
         self.JSON_Text_Edit.clear()
