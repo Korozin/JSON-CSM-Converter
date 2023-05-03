@@ -19,10 +19,11 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
         self.Arm1_Button.setToolTip("Convert all JSON data to use BOX:ARM1 tag")
         self.Leg0_Button.setToolTip("Convert all JSON data to use BOX:LEG0 tag")
         self.Leg1_Button.setToolTip("Convert all JSON data to use BOX:LEG1 tag")
-        self.Dynamic_Button.setToolTip("Convert JSON data dynamically based on \
-                                                existing type (EG: Head data will be converted\
-                                                to BOX:HEAD) if bb_main data exists, you can\
-                                                choose the tag that gets assigned")
+        self.Dynamic_Button.setToolTip("Convert JSON data dynamically based on existing type\n"
+                                       "(EG: Head data will be converted to BOX:HEAD) if bb_main\n"
+                                       "data exists, you can choose the tag that gets assigned")
+        self.CSM_Button.setToolTip("Dynamically converts JSON data to CSM Format. \n"
+                                   "Both outputs to CSM / BOX Text Box and 'model.csm'")
 
         # Initialize Error / Info windows
         self.ErrorWindow = ErrorWindow.ErrorWindow()
