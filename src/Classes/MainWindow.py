@@ -4,6 +4,7 @@ if __name__ == "__main__":
     sys.exit()
 else:
     from PyQt5 import QtCore, QtGui, QtWidgets
+    from Classes import PlainTextEdit
 
 
 class JSONConvert_GUI(object):
@@ -18,7 +19,7 @@ class JSONConvert_GUI(object):
         self.JSON_Group_Box = QtWidgets.QGroupBox(self.centralwidget)
         self.JSON_Group_Box.setGeometry(QtCore.QRect(10, 20, 511, 131))
         self.JSON_Group_Box.setObjectName("JSON_Group_Box")
-        self.JSON_Text_Edit = QtWidgets.QPlainTextEdit(self.JSON_Group_Box)
+        self.JSON_Text_Edit = PlainTextEdit.JSON_Text_Box(self.JSON_Group_Box)
         self.JSON_Text_Edit.setGeometry(QtCore.QRect(8, 29, 495, 96))
         self.JSON_Text_Edit.setObjectName("JSON_Text_Edit")
         self.Parts_Group_Box = QtWidgets.QGroupBox(self.centralwidget)
