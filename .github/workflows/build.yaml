@@ -35,7 +35,7 @@ jobs:
           python-version: '3.8'
       - run: |
           python -m pip install -r src/requirements.txt
-          python -m PyInstaller -F JSONConvert.py
+          python -m PyInstaller -F src/JSONConvert.py
 
       - name: Set release date
         shell: bash
