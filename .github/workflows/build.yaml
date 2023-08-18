@@ -27,5 +27,14 @@ jobs:
           release_name: Release ${{ env.RELEASE_DATE }}
           draft: false
           prerelease: false
-          files: |
-            dist/JSONConvert
+
+      - name: Upload release asset
+        id: upload_asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/JSONConvert
+          asset_name: JSONConvert
+          asset_content_type: application/octet-stream
