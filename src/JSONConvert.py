@@ -1,6 +1,17 @@
-import json
+import os, json, datetime
 from PyQt5 import QtWidgets
 from Classes import MainWindow, InfoWindow, ErrorWindow
+
+
+box_names = {
+    'bb_main': 'NULL',
+    'Head': 'HEAD',
+    'Body': 'BODY',
+    'RightArm': 'ARM0',
+    'LeftArm': 'ARM1',
+    'RightLeg': 'LEG0',
+    'LeftLeg': 'LEG1'
+}
 
 
 class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
@@ -44,46 +55,51 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
             Button.clicked.connect(lambda checked, arg=Text: self.Convert_JSON(arg))
 
 
+    def generate_file_name(self, prefix, file_extension):
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        file_extension = "csm"
+        base_file_name = f"{prefix}_{current_date}"
+        file_name = f"{base_file_name}.{file_extension}"
+        version = 1
+
+        while os.path.exists(file_name):
+            file_name = f"{base_file_name}_({version}).{file_extension}"
+            version += 1
+
+        return file_name
+
+
     def Convert_JSON(self, mode_text):
         try:
-            Data = json.loads(self.JSON_Text_Edit.toPlainText())
+            data = json.loads(self.JSON_Text_Edit.toPlainText())
             self.CSM_Text_Edit.clear()
 
-            Bone_Dict = {
-                'bb_main': 'NULL',
-                'Head': 'HEAD',
-                'Body': 'BODY',
-                'RightArm': 'ARM0',
-                'LeftArm': 'ARM1',
-                'RightLeg': 'LEG0',
-                'LeftLeg': 'LEG1'
-            }
+            boxes = []
 
-            Lines = []
-            for Bone in Data["minecraft:geometry"][0]["bones"]:
-                if "cubes" not in Bone:
-                    continue
-                bone_name = Bone["name"]
-                if not any([bone_name.startswith("bb_main"), bone_name in Bone_Dict]):
-                    continue
-                bone_type = Bone_Dict.get(bone_name, Bone_Dict["bb_main"])
-                for Cube in Bone["cubes"]:
-                    CSM_Data = f"BOX:{mode_text}", \
-                               Cube["origin"][0], \
-                               Cube["origin"][1], \
-                               Cube["origin"][2], \
-                               Cube["size"][0], \
-                               Cube["size"][1], \
-                               Cube["size"][2], \
-                               Cube["uv"][0], \
-                               Cube["uv"][1]
-                    Lines.append(' '.join(map(str, CSM_Data)))
+            for bone in data.get('minecraft:geometry', [])[0].get('bones', []):
+                for cube in bone.get('cubes', []):
+                    origin = cube['origin']
+                    size = cube['size']
+                    uv = cube['uv']
+                    boxes.append(f"BOX:{mode_text} "
+                        f"{origin[0]} "
+                        f"{origin[1]} "
+                        f"{origin[2]} "
+                        f"{size[0]} "
+                        f"{size[1]} "
+                        f"{size[2]} "
+                        f"{uv[0]} "
+                        f"{uv[1]}"
+                    )
 
-            self.CSM_Text_Edit.insertPlainText('\n'.join(Lines))
+            box_string = "\n".join(boxes)
+            self.CSM_Text_Edit.insertPlainText(box_string)
         except Exception as e:
-            self.ErrorWindow.CreateWindow("JSON Error!",
-                                         f"{e}<br/><br/>Invalid or empty JSON Data",
-                                         500, 200)
+            self.ErrorWindow.CreateWindow(
+                "JSON Error!",
+                f"{e}<br/><br/>Invalid or empty JSON Data",
+                500, 200
+            )
             self.ErrorWindow.show()
 
 
@@ -92,52 +108,50 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
             data = json.loads(self.JSON_Text_Edit.toPlainText())
             self.CSM_Text_Edit.clear()
 
-            box_names = {
-                'bb_main': 'NULL',
-                'Head': 'HEAD',
-                'Body': 'BODY',
-                'RightArm': 'ARM0',
-                'LeftArm': 'ARM1',
-                'RightLeg': 'LEG0',
-                'LeftLeg': 'LEG1'
-            }
-
-            # Get a list of all the box names except 'bb_main'
             valid_box_names = [box_names[name] for name in box_names if 'bb_main' not in name]
 
             boxes = []
             show_bb_main_dialog = any('bb_main' in bone['name'] for bone in data['minecraft:geometry'][0]['bones'])
 
             if show_bb_main_dialog:
-                # Show a dialog box with a list of valid options for the user to choose from
-                chosen_bb_main_tag = None  
-                box_name, ok = QtWidgets.QInputDialog.getItem(self, "Choose a tag", "Choose a tag for all bb_main instances from the following options:", valid_box_names)
+                chosen_bb_main_tag, ok = QtWidgets.QInputDialog.getItem(
+                    self,
+                    "Choose a tag",
+                    "Choose a tag for all bb_main instances from the following options:",
+                    valid_box_names
+                )
                 if not ok:
                     return
-                chosen_bb_main_tag = box_name
 
             for bone in data['minecraft:geometry'][0]['bones']:
-                if 'bb_main' in bone['name']:
-                    box_name_bone = chosen_bb_main_tag
-                else:
-                    box_name_bone = box_names.get(bone['name'], None)
-                    if not box_name_bone:
-                        # If the bone name is not recognized, skip it
-                        continue
+                box_name_bone = chosen_bb_main_tag if 'bb_main' in bone['name'] else box_names.get(bone['name'], None)
+            
+                if not box_name_bone:
+                    continue
 
                 for cube in bone['cubes']:
                     origin = cube['origin']
                     size = cube['size']
                     uv = cube['uv']
-                    boxes.append(f"BOX:{box_name_bone} {origin[0]} {origin[1]} " 
-                                 f"{origin[2]} {size[0]} {size[1]} {size[2]} {uv[0]} {uv[1]}")
+                    boxes.append(f"BOX:{box_name_bone} "
+                        f"{origin[0]} "
+                        f"{origin[1]} "
+                        f"{origin[2]} "
+                        f"{size[0]} "
+                        f"{size[1]} "
+                        f"{size[2]} "
+                        f"{uv[0]} "
+                        f"{uv[1]}"
+                    )
 
             box_string = "\n".join(boxes)
             self.CSM_Text_Edit.insertPlainText(box_string)
         except Exception as e:
-            self.ErrorWindow.CreateWindow("JSON Error!",
-                                         f"{e}<br/><br/>Invalid or empty JSON Data",
-                                         500, 200)
+            self.ErrorWindow.CreateWindow(
+                "JSON Error!",
+                f"{e}<br/><br/>Invalid or empty JSON Data",
+                500, 200
+            )
             self.ErrorWindow.show()
 
 
@@ -146,98 +160,63 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
             data = json.loads(self.JSON_Text_Edit.toPlainText())
             self.CSM_Text_Edit.clear()
 
-            box_names = {
-                'bb_main': 'NULL',
-                'Head': 'HEAD',
-                'Body': 'BODY',
-                'RightArm': 'ARM0',
-                'LeftArm': 'ARM1',
-                'RightLeg': 'LEG0',
-                'LeftLeg': 'LEG1'
-            }
-
-            # Ask the user which conversion option they'd like to use
-            text, okPressed = QtWidgets.QInputDialog.getItem(self, "Conversion Options","What conversion option would you like to use?", 
-                                                ("Old", "New"), 0, False)
-            if okPressed:
-                choice = text
-            else:
-                choice = "Old"
-
-            # Get a list of all the box names except 'bb_main'
             valid_box_names = [box_names[name] for name in box_names if 'bb_main' not in name]
 
-            # Determine if bb_main dialog should show
             boxes = []
             show_bb_main_dialog = any('bb_main' in bone['name'] for bone in data['minecraft:geometry'][0]['bones'])
 
-            # If the variable is true, show the bb_main dialog
             if show_bb_main_dialog:
-                # Show a dialog box with a list of valid options for the user to choose from
-                chosen_bb_main_tag = None  
-                box_name, ok = QtWidgets.QInputDialog.getItem(self, "Choose a tag", "Choose a tag for all bb_main instances from the following options:", valid_box_names)
+                chosen_bb_main_tag, ok = QtWidgets.QInputDialog.getItem(
+                    self,
+                    "Choose a tag",
+                    "Choose a tag for all bb_main instances from the following options:",
+                    valid_box_names
+                )
                 if not ok:
                     return
-                chosen_bb_main_tag = box_name
 
-            # Main conversion logic
             for bone in data['minecraft:geometry'][0]['bones']:
-                if 'bb_main' in bone['name']:
-                    bone_type = chosen_bb_main_tag
-                else:
-                    bone_type = box_names.get(bone['name'], None)
-                    if not bone_type:
-                        # If the bone name is not recognized, skip it
-                        continue
+                box_name_bone = chosen_bb_main_tag if 'bb_main' in bone['name'] else box_names.get(bone['name'], None)
+            
+                if not box_name_bone:
+                    continue
 
-                for i, cube in enumerate(bone["cubes"]):
-                    if choice == "Old":
-                        boxes.append(f"{bone_type} {i}\n{bone_type}\n{bone_type} {i}\n"
-                                     f"{cube['origin'][0]}\n"
-                                     f"{cube['origin'][1]}\n"
-                                     f"{cube['origin'][2]}\n"
-                                     f"{cube['size'][0]}\n"
-                                     f"{cube['size'][1]}\n"
-                                     f"{cube['size'][2]}\n"
-                                     f"{cube['uv'][0]}\n"
-                                     f"{cube['uv'][1]}\n")
-                    else:
-                        boxes.append(f"{bone_type}\nPckStudio.generateModel+ModelPart\n{bone_type}\n"
-                                     f"{cube['origin'][0]}\n"
-                                     f"{cube['origin'][1]}\n"
-                                     f"{cube['origin'][2]}\n"
-                                     f"{cube['size'][0]}\n"
-                                     f"{cube['size'][1]}\n"
-                                     f"{cube['size'][2]}\n"
-                                     f"{cube['uv'][0]}\n"
-                                     f"{cube['uv'][1]}\n")
+                for cube in bone['cubes']:
+                    origin = cube['origin']
+                    size = cube['size']
+                    uv = cube['uv']
+                    boxes.append(
+                        f"PckStudio.generateModel+ModelPart\n"
+                        f"{box_name_bone}\n"
+                        f"PckStudio.generateModel+ModelPart\n"
+                        f"{origin[0]}\n"
+                        f"{origin[1]}\n"
+                        f"{origin[2]}\n"
+                        f"{size[0]}\n"
+                        f"{size[1]}\n"
+                        f"{size[2]}\n"
+                        f"{uv[0]}\n"
+                        f"{uv[1]}"
+                    )
 
-            # Make string readable
             box_string = "\n".join(boxes)
+            self.CSM_Text_Edit.insertPlainText(box_string)
 
-            # Format the text to have no extra lines
-            lines = [line for line in box_string.split("\n") if line.strip()]
-            new_lines = []
-            for i, line in enumerate(lines):
-                if i < len(lines) - 1 and line == lines[i+1]:
-                    new_lines.append("\n".join([line, lines[i+1]]))
-                else:
-                    new_lines.append(line)
-            new_text = "\n".join(new_lines)
+            file_name = self.generate_file_name("model", "csm")
+            open(file_name, "w").write(box_string)
 
-            # Both output and save the CSM data
-            self.CSM_Text_Edit.insertPlainText(new_text)
-            open("model.csm", "w").write(new_text)
-
-            # Show dialog alerting the user the CSM has been saved
-            self.InfoWindow.CreateWindow("CSM Generated!",
-                                         f"CSM saved to 'model.csm'",
-                                         500, 200)
+            self.InfoWindow.CreateWindow(
+                "CSM Generated!",
+                f"CSM saved to '{file_name}'",
+                500, 200
+            )
             self.InfoWindow.show()
         except Exception as e:
-            self.ErrorWindow.CreateWindow("JSON Error!",
-                                         f"{e}<br/><br/>Invalid or empty JSON Data",
-                                         500, 200)
+            self.ErrorWindow.CreateWindow(
+                "JSON Error!",
+                f"{e}<br/><br/>Invalid or empty JSON Data",
+                500, 200
+            )
             self.ErrorWindow.show()
 
 
@@ -249,17 +228,21 @@ class JSONConvert_Main(QtWidgets.QMainWindow, MainWindow.JSONConvert_GUI):
     def Copy_Form_Contents(self):
         Text_To_Copy = self.CSM_Text_Edit.toPlainText()
         if Text_To_Copy == "":
-            self.ErrorWindow.CreateWindow("Clipboard Manager",
-                                         f"CSM / BOX DATA Text box is empty!",
-                                         500, 200)
+            self.ErrorWindow.CreateWindow(
+                "Clipboard Manager",
+                f"CSM / BOX DATA Text box is empty!",
+                500, 200
+            )
             self.ErrorWindow.show()
         else:
             Lines = len(Text_To_Copy.split("\n"))
             Clipboard = QtWidgets.QApplication.clipboard()
             Clipboard.setText(Text_To_Copy)
-            self.InfoWindow.CreateWindow("Clipboard Manager",
-                                         f"Successfully copied {Lines} line(s)!",
-                                         500, 200)
+            self.InfoWindow.CreateWindow(
+                "Clipboard Manager",
+                f"Successfully copied {Lines} line(s)!",
+                500, 200
+            )
             self.InfoWindow.show()
 
 

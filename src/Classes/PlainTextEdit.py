@@ -7,8 +7,6 @@ class JSON_Text_Box(QtWidgets.QPlainTextEdit):
         self.setAcceptDrops(True)
     
     def dragEnterEvent(self, event):
-        #print(event.mimeData().formats())  # print mime types of data being dragged
-        #print(event.mimeData().urls())     # print URLs in drag event's mime data
         if event.mimeData().hasUrls():
             url = event.mimeData().urls()[0]
             if url.isLocalFile() and url.toString().endswith('.json'):  # check if URL is a local file and ends with .json
